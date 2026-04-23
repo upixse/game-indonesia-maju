@@ -1,1 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duel Nusantara: Potensi Indonesia Maju</title>
+    <!-- Menggunakan Tailwind CSS untuk styling modern -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Animasi sederhana untuk transisi halaman */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-red-600 to-red-900 min-h-screen flex items-center justify-center font-sans p-4 text-gray-800">
 
+    <!-- Container Utama -->
+    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden relative fade-in">
+        
+        <!-- Header -->
+        <div class="bg-red-600 text-white text-center py-6 px-4">
+            <h1 class="text-2xl md:text-3xl font-bold tracking-wide">🇮🇩 Duel Nusantara 🇮🇩</h1>
+            <p class="text-red-100 mt-1 text-sm md:text-base">Potensi Indonesia Menjadi Negara Maju (1 vs 1)</p>
+        </div>
+
+        <!-- Layar Mulai Game -->
+        <div id="start-screen" class="p-8 text-center block">
+            <p class="text-lg mb-6 text-gray-600">Buktikan pengetahuanmu tentang potensi Indonesia menuju negara maju di tahun 2045. Mainkan bersama temanmu di perangkat yang sama!</p>
+            <button onclick="startGame()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-10 rounded-full shadow-lg transition-transform transform hover:scale-105 text-xl">
+                Mulai Duel!
+            </button>
+        </div>
+
+        <!-- Area Kuiz -->
+        <div id="quiz-area" class="p-6 md:p-8 hidden">
+            
+            <!-- Papan Skor -->
+            <div class="flex justify-between items-center mb-6 bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-inner">
+                <div class="text-center w-1/2 border-r border-gray-200">
+                    <p class="text-sm text-gray-500 font-semibold uppercase tracking-wider">Pemain 1</p>
+                    <p class="text-3xl font-bold text-blue-600" id="p1-score">0</p>
+                </div>
+                <div class="text-center w-1/2">
+                    <p class="text-sm text-gray-500 font-semibold uppercase tracking-wider">Pemain 2</p>
+                    <p class="text-3xl font-bold text-red-600" id="p2-score">0</p>
+                </div>
+            </div>
+
+            <!-- Indikator Giliran -->
+            <div id="turn-indicator" class="text-center mb-6 py-2 rounded-xl font-bold text-lg transition-colors duration-300">
+                Giliran: Pemain 1
+            </div>
+
+            <!-- Pertanyaan -->
+            <div class="mb-8 min-h-[80px] flex items-center justify-center">
+                <h2 id="question-text" class="text-xl md:text-2xl font-semibold text-center text-gray-800 leading-snug">
+                    Memuat pertanyaan...
+                </h2>
+            </div>
+
+            <!-- Pilihan Jawaban -->
+            <div id="options-area" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Tombol pilihan akan dihasilkan lewat JavaScript -->
+            </div>
+            
+            <!-- Info Soal -->
+            <div class="mt-6 text-center text-sm text-gray-400 font-medium">
+                Soal <span id="current-q-num">1</span> dari <span id="total-q-num">6</span>
+            </div>
+        </div>
+
+        <!-- Layar Hasil Akhir -->
+        <div id="result-screen" class="p-8 text-center hidden">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Permainan Selesai! 🎉</h2>
+            <div id="winner-text" class="text-2xl font-extrabold text-red-600 mb-8 py-4 bg-red-50 rounded-2xl"></div>
+            
+            <div class="flex justify-center gap-8 mb-8">
+                <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                    <p class="text-gray-500 font-semibold">Pemain 1</p>
+                    <p class="text-4xl font-bold text-blue-600 mt-2" id="final-p1">0</p>
+                </div>
+                <div class="bg-red-50 p-6 rounded-2xl border border-red-100">
+                    <p class="text-gray-500 font-semibold">Pemain 2</p>
+                    <p class="text-4xl font-bold text-red-600 mt-2" id="final-p2">0</p>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="bg-gray-800 hover:bg-black text-white font-bold py-3 px-8 rounded-full shadow-md transition-colors text-lg">
+                Main Lagi
+            </button>
+        </div>
+
+        <!-- Modal Umpan Balik (Feedback) -->
+        <div id="feedback-modal" class="absolute inset-0 bg-white/95 backdrop-blur-sm hidden flex-col items-center justify-center p-6 text-center z-10">
+            <div id="feedback-icon" class="text-6xl mb-4"></div>
+            <h3 id="feedback-title" class="text-3xl font-bold mb-2"></h3>
+            <p id="feedback-message" class="text-lg text-gray-600 mb-8 max-w-md"></p>
+            <button onclick="nextTurn()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-10 rounded-full text-lg shadow-lg">
+                Lanjut
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Data Soal
+        const questions = [
+            {
+                q: "Apa sebutan untuk keuntungan ekonomi akibat besarnya proporsi penduduk usia produktif (15-64 tahun) di Indonesia?",
+                options: ["Ledakan Penduduk", "Bonus Demografi", "Transisi Demografi", "Defisit Demografi"],
+                answer: 1
+            },
+            {
+                q: "Untuk menjadi negara maju, Indonesia melakukan 'Hilirisasi Industri'. Apa makna utama dari kebijakan ini?",
+                options: ["Mengekspor barang mentah besar-besaran", "Mengimpor barang jadi dari luar negeri", "Mengolah bahan mentah menjadi barang jadi di dalam negeri", "Menutup semua pabrik asing di Indonesia"],
+                answer: 2
+            },
+            {
+                q: "Posisi silang Indonesia di antara dua benua dan dua samudra membuat Indonesia sangat berpotensi menjadi...",
+                options: ["Negara Agraris Terbesar", "Poros Maritim Dunia", "Eksportir Gandum Utama", "Pusat Industri Otomotif"],
+                answer: 1
+            },
+            {
+                q: "Sumber energi terbarukan berupa panas bumi yang potensinya sangat besar di Indonesia disebut energi...",
+                options: ["Geotermal", "Biomassa", "Fosil", "Hidroelektrik"],
+                answer: 0
+            },
+            {
+                q: "Pembangunan jalan tol, pelabuhan, dan bandara secara masif di berbagai pulau bertujuan untuk menurunkan biaya...",
+                options: ["Pajak", "Produksi", "Logistik", "Konsumsi"],
+                answer: 2
+            },
+            {
+                q: "Apa target tahun visi 'Indonesia Emas' di mana Indonesia ditargetkan menjadi negara maju berskala global?",
+                options: ["2030", "2045", "2050", "2060"],
+                answer: 1
+            }
+        ];
+
+        // Variabel Status Game
+        let currentQuestionIndex = 0;
+        let currentPlayer = 1;
+        let scores = { 1: 0, 2: 0 };
+
+        // Elemen DOM
+        const startScreen = document.getElementById('start-screen');
+        const quizArea = document.getElementById('quiz-area');
+        const resultScreen = document.getElementById('result-screen');
+        const questionText = document.getElementById('question-text');
+        const optionsArea = document.getElementById('options-area');
+        const p1ScoreText = document.getElementById('p1-score');
+        const p2ScoreText = document.getElementById('p2-score');
+        const turnIndicator = document.getElementById('turn-indicator');
+        const feedbackModal = document.getElementById('feedback-modal');
+        const currentQNum = document.getElementById('current-q-num');
+        
+        document.getElementById('total-q-num').innerText = questions.length;
+
+        function startGame() {
+            scores = { 1: 0, 2: 0 };
+            currentQuestionIndex = 0;
+            updateScoreboard();
+            
+            startScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            quizArea.classList.remove('hidden');
+            quizArea.classList.add('fade-in');
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+
+            // Tentukan giliran berdasarkan indeks soal (Genap = P1, Ganjil = P2)
+            currentPlayer = (currentQuestionIndex % 2 === 0) ? 1 : 2;
+
+            const currentQ = questions[currentQuestionIndex];
+            questionText.innerText = currentQ.q;
+            currentQNum.innerText = currentQuestionIndex + 1;
+            optionsArea.innerHTML = "";
+            
+            // Perbarui UI Indikator Giliran
+            turnIndicator.innerText = `Giliran: Pemain ${currentPlayer}`;
+            if (currentPlayer === 1) {
+                turnIndicator.className = "text-center mb-6 py-2 rounded-xl font-bold text-lg transition-colors duration-300 bg-blue-100 text-blue-700";
+            } else {
+                turnIndicator.className = "text-center mb-6 py-2 rounded-xl font-bold text-lg transition-colors duration-300 bg-red-100 text-red-700";
+            }
+
+            // Buat tombol pilihan ganda
+            currentQ.options.forEach((opt, index) => {
+                const btn = document.createElement("button");
+                btn.className = "bg-white border-2 border-gray-200 hover:border-red-500 hover:bg-red-50 text-gray-700 font-semibold py-4 px-4 rounded-xl transition-all duration-200 text-left md:text-center shadow-sm";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(index);
+                optionsArea.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIndex) {
+            const correctIndex = questions[currentQuestionIndex].answer;
+            const isCorrect = selectedIndex === correctIndex;
+            
+            if (isCorrect) {
+                scores[currentPlayer] += 10;
+                showFeedback(true, `+10 Poin untuk Pemain ${currentPlayer}!`);
+            } else {
+                const correctText = questions[currentQuestionIndex].options[correctIndex];
+                showFeedback(false, `Jawaban yang benar adalah: <strong>${correctText}</strong>`);
+            }
+
+            updateScoreboard();
+        }
+
+        function showFeedback(isCorrect, message) {
+            const titleEl = document.getElementById('feedback-title');
+            const msgEl = document.getElementById('feedback-message');
+            const iconEl = document.getElementById('feedback-icon');
+
+            if (isCorrect) {
+                iconEl.innerText = "✅";
+                titleEl.innerText = "Tepat Sekali!";
+                titleEl.className = "text-3xl font-bold mb-2 text-green-600";
+            } else {
+                iconEl.innerText = "❌";
+                titleEl.innerText = "Kurang Tepat!";
+                titleEl.className = "text-3xl font-bold mb-2 text-red-600";
+            }
+
+            msgEl.innerHTML = message;
+            feedbackModal.classList.remove('hidden');
+            feedbackModal.classList.add('flex', 'fade-in');
+        }
+
+        function nextTurn() {
+            feedbackModal.classList.add('hidden');
+            feedbackModal.classList.remove('flex');
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        function updateScoreboard() {
+            p1ScoreText.innerText = scores[1];
+            p2ScoreText.innerText = scores[2];
+        }
+
+        function showResults() {
+            quizArea.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            resultScreen.classList.add('fade-in');
+            
+            document.getElementById("final-p1").innerText = scores[1];
+            document.getElementById("final-p2").innerText = scores[2];
+
+            const winnerText = document.getElementById("winner-text");
+            if (scores[1] > scores[2]) {
+                winnerText.innerText = "🏆 Pemain 1 Memenangkan Duel! 🏆";
+            } else if (scores[2] > scores[1]) {
+                winnerText.innerText = "🏆 Pemain 2 Memenangkan Duel! 🏆";
+            } else {
+                winnerText.innerText = "🤝 Hasilnya Seri! Sama-sama Pintar! 🤝";
+            }
+        }
+    </script>
+</body>
+</html>
