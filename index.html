@@ -110,6 +110,64 @@
     </div>
 
     <script>
+        // --- SISTEM SUARA (WEB AUDIO API) ---
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(frequency, type, duration, vol, startTime = 0) {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime + startTime);
+            
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime + startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + startTime + duration);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start(audioCtx.currentTime + startTime);
+            oscillator.stop(audioCtx.currentTime + startTime + duration);
+        }
+
+        function playStartSound() {
+            playTone(523.25, 'square', 0.1, 0.1, 0);   // C5
+            playTone(659.25, 'square', 0.1, 0.1, 0.1); // E5
+            playTone(783.99, 'square', 0.2, 0.1, 0.2); // G5
+            playTone(1046.50, 'square', 0.4, 0.1, 0.3); // C6
+        }
+
+        function playCorrectSound() {
+            playTone(440, 'sine', 0.1, 0.2, 0);       // A4
+            playTone(554.37, 'sine', 0.1, 0.2, 0.1);  // C#5
+            playTone(659.25, 'sine', 0.3, 0.2, 0.2);  // E5
+        }
+
+        function playWrongSound() {
+            playTone(300, 'sawtooth', 0.2, 0.1, 0);   // Rendah
+            playTone(250, 'sawtooth', 0.4, 0.1, 0.2); // Lebih rendah (Buzzer)
+        }
+
+        function playEndSound() {
+            let time = 0;
+            [523.25, 659.25, 783.99, 1046.50].forEach(f => {
+                playTone(f, 'sine', 0.1, 0.2, time);
+                time += 0.1;
+            });
+            playTone(1046.50, 'sine', 0.6, 0.2, time); // C6 Panjang
+        }
+        // ------------------------------------
+
         // Data Soal
         const questions = [
             {
@@ -164,6 +222,9 @@
         document.getElementById('total-q-num').innerText = questions.length;
 
         function startGame() {
+            initAudio(); // Inisialisasi audio saat interaksi pertama
+            playStartSound(); // Mainkan suara mulai
+
             scores = { 1: 0, 2: 0 };
             currentQuestionIndex = 0;
             updateScoreboard();
@@ -209,13 +270,16 @@
         }
 
         function checkAnswer(selectedIndex) {
+            initAudio(); // Pastikan audio siap
             const correctIndex = questions[currentQuestionIndex].answer;
             const isCorrect = selectedIndex === correctIndex;
             
             if (isCorrect) {
                 scores[currentPlayer] += 10;
+                playCorrectSound();
                 showFeedback(true, `+10 Poin untuk Pemain ${currentPlayer}!`);
             } else {
+                playWrongSound();
                 const correctText = questions[currentQuestionIndex].options[correctIndex];
                 showFeedback(false, `Jawaban yang benar adalah:<br><br><strong class="text-4xl block mt-2 text-gray-800">${correctText}</strong>`);
             }
@@ -256,6 +320,8 @@
         }
 
         function showResults() {
+            playEndSound(); // Mainkan suara selesai
+            
             quizArea.classList.add('hidden');
             resultScreen.classList.remove('hidden');
             resultScreen.classList.add('fade-in');
